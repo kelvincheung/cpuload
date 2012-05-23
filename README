@@ -1,0 +1,35 @@
+cpuload 0.1
+Copyright (C) 2012 Kelvin Cheung <keguang.zhang@gmail.com>
+
+WHAT IS THIS?
+=============
+cpuload is a simple tool to obtain intuitive vision of CPU load
+(including total, user, system, irq and softirq) within a certain
+time, which is especially useful for embedded system without GUI.
+It is tested with Linux 2.6.
+
+Note that, cpuload is Linux specific -- it is based
+on the Linux /proc filesystem.
+
+Thanks to Hisham Muhammad. The code of getting CPU load is
+derived from 'htop' (http://htop.sourceforge.net).
+Thanks to Zack T Smith. The code of graphing is derived
+from 'bandwidth' (http://zsmith.co/bandwidth.html).
+
+SOURCE CODE
+===========
+
+INSTALLATION
+============
+./configure
+
+make
+
+make install
+
+See the file INSTALL for compilation and installation instructions.
+
+
+USAGE
+=====
+Please run `cpuload -h` for a list and explanation of options.
