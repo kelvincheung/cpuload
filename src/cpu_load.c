@@ -35,12 +35,15 @@
 
 int quiet = 0;
 int simple = 0;
+int cpu = -1;
+char cpustr[16] = ""; 
 int time = 0;
 int duration = DURATION;
 ProcessList *pl = NULL;
 cpu_load *cl = NULL;
 
 extern void graph_cpu_load(cpu_load * cl, int count);
+void analyse_cpu_load(cpu_load * cl, int count);
 void do_stat(void);
 
 void error(char *s)
@@ -56,6 +59,7 @@ static void print_usage(void)
 	      "-h --help             Print this help screen\n"
 	      "-s --simple           Simplify the output\n"
 	      "-q --quiet            Suppress all normal output\n"
+	      "-c --cpu <num>        choose the cpu you care about (default: -1, overall)\n"
 	      "-d --duration <min>   Duration in minutes (default: 5 min, 1<=d<=10)\n"
 	      "-i --interval <msec>  interval in milliseconds (default: 1000 ms; 500 or 1000)\n",
 	      stdout);
@@ -74,14 +78,14 @@ static void print_cpu_load(cpu_load * cpuload)
 {
 	if (simple)
 		printf
-		    ("%d\tCPU\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\n\n",
-		     time, cpuload->total_load, cpuload->user_load,
+		    ("%d\tCPU%s\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\n\n",
+		     time, cpustr, cpuload->total_load, cpuload->user_load,
 		     cpuload->system_load, cpuload->irq_load,
 		     cpuload->softirq_load, cpuload->iowait_load);
 	else
 		printf
-		    ("%d\tCPU\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\n\n",
-		     time, cpuload->total_load, cpuload->nice_load,
+		    ("%d\tCPU%s\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\n\n",
+		     time, cpustr, cpuload->total_load, cpuload->nice_load,
 		     cpuload->user_load, cpuload->system_load,
 		     cpuload->irq_load, cpuload->softirq_load,
 		     cpuload->iowait_load, cpuload->steal_load,
@@ -99,13 +103,14 @@ int main(int argc, char *argv[])
 		{"help", no_argument, NULL, 'h'},
 		{"simple", no_argument, NULL, 's'},
 		{"quiet", no_argument, NULL, 'q'},
+		{"cpu", required_argument, NULL, 'c'},
 		{"duration", required_argument, NULL, 'd'},
 		{"interval", required_argument, NULL, 'i'},
 		{0, 0, 0, 0}
 	};
 
 	while ((opt =
-		getopt_long(argc, argv, "hsqd:i:", long_opts, &opti)) != EOF) {
+		getopt_long(argc, argv, "hsqc:d:i:", long_opts, &opti)) != EOF) {
 		switch (opt) {
 		case 'h':
 			print_usage();
@@ -117,6 +122,12 @@ int main(int argc, char *argv[])
 
 		case 'q':
 			quiet = 1;
+			break;
+
+		case 'c':
+			sscanf(optarg, "%d", &cpu);
+			if (cpu < -1)
+				error("Invalid argument");
 			break;
 
 		case 'd':
@@ -141,6 +152,9 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	cpu++; 		/* to fit for format of /proc/stat */ 
+	if (cpu)
+		sprintf(cpustr, "%d", (cpu - 1));
 	duration *= 60000;
 	iteration = duration / interval + 1;
 	cl = calloc(sizeof(cpu_load), iteration);
@@ -186,9 +200,32 @@ int main(int argc, char *argv[])
 
 	cpudata_delete(pl);
 
+	analyse_cpu_load(cl, iteration);
+
 	/* Graph the results */
 	graph_cpu_load(cl, iteration);
 	free(cl);
+}
+
+/*
+ * Find out max and min load,
+ * and calculate average load.
+ */
+void analyse_cpu_load(cpu_load * cl, int count)
+{
+	int i;
+	float max , min, sum = 0.0;
+	max = min = cl[0].total_load;
+
+	for (i = 0; i < count; i++) {
+		max = max < cl[i].total_load ? cl[i].total_load : max;
+		min = min > cl[i].total_load ? cl[i].total_load : min;
+		sum += cl[i].total_load;
+	}
+
+	printf ("Max: %-5.1f\n", max);
+	printf ("Avg: %-5.1f\n", sum / count);
+	printf ("Min: %-5.1f\n", min);
 }
 
 /*
@@ -198,7 +235,7 @@ void do_stat(void)
 {
 	read_cpu_stat(pl);
 	calc_cpu_load(pl);
-	cl[time] = pl->cpus[0].cpuload;
+	cl[time] = pl->cpuload[cpu];
 	if (quiet == 0)
 		print_cpu_load(&(cl[time]));	/* print total results */
 	time++;

@@ -37,8 +37,6 @@
 #define PROCMEMINFOFILE PROCDIR "/meminfo"
 #endif
 
-#define ITEMS 8
-
 #define BUFLEN 256
 
 #define String_startsWith(s, match) (strstr((s), (match)) == (s))
@@ -88,14 +86,13 @@ typedef struct CPUData_ {
 	unsigned long long int softIrqPeriod;
 	unsigned long long int stealPeriod;
 	unsigned long long int guestPeriod;
-
-	cpu_load cpuload; 
 } CPUData;
 
 typedef struct ProcessList_ {
 	int items;
 	int cpuCount;
-	CPUData *cpus;
+	CPUData *cpudata;
+	cpu_load *cpuload; 
 } ProcessList;
 
 extern ProcessList *cpudata_new(void);

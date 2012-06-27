@@ -21,23 +21,17 @@
 #include <assert.h>
 #include <unistd.h>
 
-#include "config.h"
 #include "read_cpu_stat.h"
 
 extern int quiet;
 extern int simple;
+extern int cpu;
 extern int time;
 
 ProcessList *cpudata_new(void)
 {
 	int i;
 	ProcessList *this;
-	this = calloc(sizeof(ProcessList), 1);
-	if (this == NULL) {
-		perror("Failed to allocate memory");
-		exit(1);
-	}
-
 	FILE *file = fopen(PROCSTATFILE, "r");
 	assert(file != NULL);
 	char buffer[BUFLEN];
@@ -51,13 +45,33 @@ ProcessList *cpudata_new(void)
 	} while (String_startsWith(buffer, "cpu"));
 	fclose(file);
 
-	this->cpuCount = cpus - 1;
-	this->items = ITEMS;
-	this->cpus = calloc(sizeof(CPUData), cpus);
+	if (cpu > cpus -1) {
+		error("too many cpus");
+		exit(1);
+	}
 
+	this = calloc(sizeof(ProcessList), 1);
+	if (this == NULL) {
+		perror("Failed to allocate memory");
+		exit(1);
+	}
+
+	this->cpudata = calloc(sizeof(CPUData), cpus);
+	if (this->cpudata == NULL) {
+		perror("Failed to allocate memory");
+		exit(1);
+	}
+
+	this->cpuload = calloc(sizeof(CPUData), cpus);
+	if (this->cpuload == NULL) {
+		perror("Failed to allocate memory");
+		exit(1);
+	}
+
+	this->cpuCount = cpus - 1;
 	for (i = 0; i < cpus; i++) {
-		this->cpus[i].totalTime = 1;
-		this->cpus[i].totalPeriod = 1;
+		this->cpudata[i].totalTime = 1;
+		this->cpudata[i].totalPeriod = 1;
 	}
 
 	return this;
@@ -65,7 +79,8 @@ ProcessList *cpudata_new(void)
 
 void cpudata_delete(ProcessList * this)
 {
-	free(this->cpus);
+	free(this->cpuload);
+	free(this->cpudata);
 	free(this);
 }
 
@@ -120,7 +135,7 @@ void read_cpu_stat(ProcessList * this)
 		totaltime =
 		    usertime + nicetime + systemalltime + idlealltime +
 		    virtalltime;
-		CPUData *cpuData = &(this->cpus[i]);
+		CPUData *cpuData = &(this->cpudata[i]);
 		assert(usertime >= cpuData->userTime);
 		assert(nicetime >= cpuData->niceTime);
 		assert(systemtime >= cpuData->systemTime);
@@ -168,8 +183,8 @@ void calc_cpu_load(ProcessList * this)
 	char buffer[BUFLEN];
 
 	for (i = 0; i <= this->cpuCount; i++) {
-		CPUData *cpuData = &(this->cpus[i]);
-		cpu_load *cpuLoad = &(cpuData->cpuload);
+		CPUData *cpuData = &(this->cpudata[i]);
+		cpu_load *cpuLoad = &(this->cpuload[i]);
 		float total =
 		    (float)(cpuData->totalPeriod ==
 			    0 ? 1 : cpuData->totalPeriod);
@@ -188,28 +203,5 @@ void calc_cpu_load(ProcessList * this)
 			    (cpuLoad->nice_load + cpuLoad->user_load +
 			     cpuLoad->system_load + cpuLoad->irq_load +
 			     cpuLoad->softirq_load)));
-
-		if ((quiet == 0) && (this->cpuCount > 1) && (i > 0))
-			print_each_cpu(this, i);
 	}
-}
-
-void print_each_cpu(ProcessList * this, int cpu)
-{
-	cpu_load *cpuLoad = &(this->cpus[cpu].cpuload);
-
-	if (simple)
-		printf
-		    ("%d\tCPU%d\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\n\n",
-		     time, cpu, cpuLoad->total_load, cpuLoad->user_load,
-		     cpuLoad->system_load, cpuLoad->irq_load,
-		     cpuLoad->softirq_load, cpuLoad->iowait_load);
-	else
-		printf
-		    ("%d\tCPU%d\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\n\n",
-		     time, cpu, cpuLoad->total_load, cpuLoad->nice_load,
-		     cpuLoad->user_load, cpuLoad->system_load,
-		     cpuLoad->irq_load, cpuLoad->softirq_load,
-		     cpuLoad->iowait_load, cpuLoad->steal_load,
-		     cpuLoad->guest_load);
 }
