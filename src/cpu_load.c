@@ -37,7 +37,7 @@ int quiet = 0;
 int simple = 0;
 int cpu = -1;
 char cpustr[16] = ""; 
-int time = 0;
+int times = 0;
 int duration = DURATION;
 ProcessList *pl = NULL;
 cpu_load *cl = NULL;
@@ -79,13 +79,13 @@ static void print_cpu_load(cpu_load * cpuload)
 	if (simple)
 		printf
 		    ("%d\tCPU%s\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\n\n",
-		     time, cpustr, cpuload->total_load, cpuload->user_load,
+		     times, cpustr, cpuload->total_load, cpuload->user_load,
 		     cpuload->system_load, cpuload->irq_load,
 		     cpuload->softirq_load, cpuload->iowait_load);
 	else
 		printf
 		    ("%d\tCPU%s\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\t%-5.1f\n\n",
-		     time, cpustr, cpuload->total_load, cpuload->nice_load,
+		     times, cpustr, cpuload->total_load, cpuload->nice_load,
 		     cpuload->user_load, cpuload->system_load,
 		     cpuload->irq_load, cpuload->softirq_load,
 		     cpuload->iowait_load, cpuload->steal_load,
@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while (time < iteration)
+	while (times < iteration)
 		pause();
 
 	/* Stop interval timer */
@@ -235,8 +235,8 @@ void do_stat(void)
 {
 	read_cpu_stat(pl);
 	calc_cpu_load(pl);
-	cl[time] = pl->cpuload[cpu];
+	cl[times] = pl->cpuload[cpu];
 	if (quiet == 0)
-		print_cpu_load(&(cl[time]));	/* print total results */
-	time++;
+		print_cpu_load(&(cl[times]));	/* print total results */
+	times++;
 }

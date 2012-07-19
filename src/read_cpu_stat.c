@@ -26,7 +26,7 @@
 extern int quiet;
 extern int simple;
 extern int cpu;
-extern int time;
+extern int times;
 
 ProcessList *cpudata_new(void)
 {
