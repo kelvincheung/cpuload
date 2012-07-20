@@ -25,7 +25,6 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <wchar.h>
 
 #include "BMP.h"
 #include "config.h"
@@ -59,14 +58,6 @@ enum {
 };
 
 extern int duration;
-
-#define MSGLEN 10000
-static wchar_t msg[MSGLEN];
-
-void newline(void)
-{
-	wcscat(msg, L"\n");
-}
 
 /*
  * Name:	graph_draw_labels_memory
@@ -237,35 +228,30 @@ void graph_cpu_load(cpu_load * cl, int count)
 	graph_init();
 
 	graph_new_line("Total Load", RGB_BLUE);
-	newline();
 	for (i = 0; i < count; i++) {
 		cpu_load *cpuload = &(cl[i]);
 		graph_add_point(i, (cpuload->total_load * (float)10.0));
 	}
 
 	graph_new_line("User Load", RGB_GREEN);
-	newline();
 	for (i = 0; i < count; i++) {
 		cpu_load *cpuload = &(cl[i]);
 		graph_add_point(i, (cpuload->user_load * (float)10.0));
 	}
 
 	graph_new_line("System Load", RGB_MAROON);
-	newline();
 	for (i = 0; i < count; i++) {
 		cpu_load *cpuload = &(cl[i]);
 		graph_add_point(i, (cpuload->system_load * (float)10.0));
 	}
 
 	graph_new_line("IRQ Load", RGB_RED);
-	newline();
 	for (i = 0; i < count; i++) {
 		cpu_load *cpuload = &(cl[i]);
 		graph_add_point(i, (cpuload->irq_load * (float)10.0));
 	}
 
 	graph_new_line("Softirq Load", RGB_PURPLE);
-	newline();
 	for (i = 0; i < count; i++) {
 		cpu_load *cpuload = &(cl[i]);
 		graph_add_point(i, (cpuload->softirq_load * (float)10.0));
