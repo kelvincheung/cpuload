@@ -132,7 +132,7 @@ void graph_new_line(char *str, unsigned long color)
 	graph_last_x = graph_last_y = -1;
 
 	if (graph_data_index >= MAX_GRAPH_DATA - 2)
-		error("Too many graph data.");
+		perror("Too many graph data.");
 
 	graph_data[graph_data_index++] = DATUM_COLOR;
 	graph_data[graph_data_index++] = color;
@@ -145,7 +145,7 @@ void graph_new_line(char *str, unsigned long color)
 void graph_add_point(int size, int amount)
 {
 	if (graph_data_index >= MAX_GRAPH_DATA - 4)
-		error("Too many graph data.");
+		perror("Too many graph data.");
 
 	graph_data[graph_data_index++] = DATUM_SIZE;
 	graph_data[graph_data_index++] = size;
