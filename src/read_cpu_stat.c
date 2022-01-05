@@ -46,7 +46,7 @@ ProcessList *cpudata_new(void)
 	fclose(file);
 
 	if (cpu > cpus -1) {
-		error("too many cpus");
+		perror("too many cpus");
 		exit(1);
 	}
 
